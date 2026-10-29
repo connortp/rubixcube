@@ -29,10 +29,15 @@ Same cubes for everyone each day (seeded by the date), new ones at local midnigh
   Every row that spells a word is **1 point**, so the max is 6 × N.
   - 🟩 green: the row is back to the day's original word.
   - 🟨 yellow: a different real word. Still a point!
+- A table above the cube shows each face's progress, labelled by its centre letter,
+  e.g. `A 2/5` means 2 of that face's 5 rows are words.
 - Moves are counted against **par**, the number of random twists used to scramble.
   Undo takes a twist back without counting it.
 - Getting every row is an automatic finish. Otherwise tap **Lock in** whenever you're
   happy with your score. One go per level per day.
+- Stuck? **Give up** freezes your score, then the cube rapidly twists itself back from
+  wherever you left it to the solved cube, lighting up every word you missed on the way.
+  The share text says 🏳️ Gave up.
 
 ## Sharing
 
