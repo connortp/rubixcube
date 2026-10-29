@@ -41,7 +41,8 @@
 
     <footer class="bar">
       <button class="btn ghost" id="undo-btn">↶ Undo</button>
-      <button class="btn ghost" id="view-btn">⟲ View</button>
+      <button class="btn ghost" id="view-btn" aria-label="Reset view" title="Reset view">⟲</button>
+      <button class="btn ghost" id="giveup-btn">🏳️ Give up</button>
       <button class="btn primary" id="done-btn">Lock in</button>
     </footer>
   </div>
@@ -57,6 +58,7 @@
         <li><span>⭐</span><div>Every row that spells a word is a point. <b class="g">Green</b> = the original word is back. <b class="y">Yellow</b> = a different real word, still a point!</div></li>
         <li><span>⛳</span><div><b>Par</b> is how many twists it took to scramble. Max score is 6 faces × rows.</div></li>
         <li><span>📤</span><div>Hit <b>Lock in</b> when you're happy, then <b>Share</b> your score with the group chat.</div></li>
+        <li><span>🏳️</span><div>Stuck? <b>Give up</b> keeps your score and spins the cube back so you can see every word you missed.</div></li>
       </ul>
       <p class="muted">Easy is a 3×3 with 3-letter words, Medium a 5×5 with 5-letter words, Hard a 7×7 with 7-letter words. Same cubes for everyone, new ones every midnight.</p>
       <button class="btn primary wide" value="close">Let's twist</button>
@@ -65,11 +67,11 @@
 
   <dialog id="confirm-dialog">
     <form method="dialog" class="sheet small">
-      <h2>Lock in your score?</h2>
+      <h2 id="confirm-title">Lock in your score?</h2>
       <p id="confirm-text"></p>
       <div class="row">
         <button class="btn ghost" value="cancel">Keep twisting</button>
-        <button class="btn primary" value="ok">Lock it in</button>
+        <button class="btn primary" value="ok" id="confirm-ok">Lock it in</button>
       </div>
     </form>
   </dialog>

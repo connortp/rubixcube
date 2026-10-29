@@ -1,6 +1,7 @@
 import { applyMove, inverseMove, readFaces, encodeMove, decodeMove, FACES } from "./cube.js";
 import {
   DIFFICULTIES, generatePuzzle, buildScrambled, scoreCube, shareText, rankFor, formatTime, dateKey, puzzleNumber,
+  revealMoves,
 } from "./puzzle.js";
 import { CubeView } from "./render.js";
 
@@ -27,6 +28,7 @@ const store = {
 let today = dateKey();
 let game = null; // { puzzle, cube, moves, startedAt, finishedAt, done, result }
 let busy = false;
+let revealing = false; // playing the give-up animation
 let lastWords = new Set();
 
 const view = new CubeView($("stage"), {
@@ -48,6 +50,8 @@ function load(diffKey) {
     applyMove(cube, move);
     moves.push(move);
   }
+  // Gave up earlier today: show the finished cube straight away.
+  if (saved?.gaveUp) for (const m of revealMoves(puzzle, moves)) applyMove(cube, m);
   game = {
     diffKey,
     puzzle,
@@ -56,6 +60,7 @@ function load(diffKey) {
     startedAt: saved?.startedAt ?? null,
     finishedAt: saved?.finishedAt ?? null,
     done: saved?.done ?? false,
+    final: saved?.gaveUp ?? null, // the score frozen at the moment they gave up
   };
   view.setCube(cube);
   view.setLocked(game.done);
@@ -71,6 +76,7 @@ function save() {
     startedAt: game.startedAt,
     finishedAt: game.finishedAt,
     done: game.done,
+    gaveUp: game.final,
   });
 }
 
@@ -92,6 +98,41 @@ async function undo() {
   const last = game.moves.pop();
   await twist(inverseMove(last), { record: false });
 }
+
+// Freeze the score, then play the cube back to solved, fast, so every missed word
+// lights up on the way.
+async function giveUp() {
+  if (busy || game.done) return;
+  busy = true;
+  const { score, targets, status } = game.result;
+  game.final = { score, targets, status };
+  game.done = true;
+  game.finishedAt = Date.now();
+  if (!game.startedAt) game.startedAt = game.finishedAt;
+  save();
+  recordStats(false);
+  view.setLocked(true);
+  renderTabs();
+  refresh();
+  view.resetView();
+  const moves = revealMoves(game.puzzle, game.moves);
+  const ms = Math.max(45, Math.min(140, 3500 / moves.length));
+  revealing = true;
+  await wait(400);
+  for (const m of moves) {
+    await view.animateMove(game.cube, m, ms);
+    applyMove(game.cube, m);
+    // Hold for a beat whenever original words come back so you can read them.
+    if (refresh().some((x) => x.st === "target")) await wait(Math.min(220, ms * 2));
+  }
+  revealing = false;
+  busy = false;
+  refresh();
+  toast(`🏳️ All ${game.puzzle.max} words. You had ${score}`, 2400);
+  setTimeout(showResults, 1600);
+}
+
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function finish() {
   if (game.done) return;
@@ -129,7 +170,8 @@ const elapsed = () => (game.startedAt ? (game.finishedAt ?? Date.now()) - game.s
 function refresh() {
   const { cube, puzzle } = game;
   const result = scoreCube(cube, puzzle.solution);
-  game.result = result;
+  // After giving up the cube is shown solved, but the score stays what they had.
+  game.result = game.final ? { ...game.final, rows: result.rows } : result;
 
   const grid = readFaces(cube);
   const statusById = new Map();
@@ -138,7 +180,7 @@ function refresh() {
 
   const scoreEl = $("score");
   const prev = scoreEl.textContent;
-  scoreEl.textContent = `${result.score}/${puzzle.max}`;
+  scoreEl.textContent = `${game.result.score}/${puzzle.max}`;
   if (lastWords && prev !== scoreEl.textContent) bump(scoreEl.parentElement);
   $("moves").textContent = game.moves.length;
   $("par").textContent = `moves · par ${puzzle.par}`;
@@ -146,6 +188,7 @@ function refresh() {
   $("undo-btn").disabled = game.done || !game.moves.length;
   const doneBtn = $("done-btn");
   doneBtn.textContent = game.done ? "📤 Share" : "Lock in";
+  $("giveup-btn").hidden = game.done;
 
   // Word chips; announce new ones.
   const found = [];
@@ -163,8 +206,9 @@ function refresh() {
     chip.textContent = x.w;
     wordsEl.appendChild(chip);
   }
-  if (fresh.length && !game.done) toast(fresh.map((x) => `${x.st === "target" ? "🟩" : "🟨"} ${x.w}`).join("  ") + `  +${fresh.length}`);
+  if (fresh.length && (!game.done || revealing)) toast(fresh.map((x) => `${x.st === "target" ? "🟩" : "🟨"} ${x.w}`).join("  ") + `  +${fresh.length}`);
   lastWords = keys;
+  return fresh;
 }
 
 function bump(el) {
@@ -206,12 +250,13 @@ function currentShareText() {
     moves: game.moves.length,
     timeMs: elapsed(),
     url: location.origin + location.pathname,
+    gaveUp: !!game.final,
   });
 }
 
 function showResults() {
   const { puzzle, result } = game;
-  $("result-rank").textContent = game.done ? rankFor(result.score, puzzle.max) : "In progress…";
+  $("result-rank").textContent = game.final ? "🏳️ Gave up" : game.done ? rankFor(result.score, puzzle.max) : "In progress…";
   $("result-score").innerHTML = `${result.score}<small>/${puzzle.max}</small>`;
   $("result-meta").textContent = `${puzzle.difficulty.label} ${puzzle.n}×${puzzle.n} · ${game.moves.length} moves (par ${puzzle.par}) · ${formatTime(elapsed())}`;
   const text = currentShareText();
@@ -230,6 +275,7 @@ function showResults() {
 
   const answers = $("answers");
   answers.hidden = !game.done;
+  answers.open = !!game.final;
   $("answers-list").innerHTML = puzzle.solution
     .map((words, f) => `<div class="face"><b>${FACES[f].name}</b>${words.join(" · ")}</div>`)
     .join("");
@@ -286,11 +332,31 @@ async function copy(text) {
 
 function confirmFinish() {
   const { result, puzzle } = game;
-  $("confirm-text").textContent =
-    `You've got ${result.score} of ${puzzle.max} words. Once you lock in, today's ${puzzle.difficulty.label} cube is done and you can share your score.`;
+  ask(
+    "Lock in your score?",
+    `You've got ${result.score} of ${puzzle.max} words. Once you lock in, today's ${puzzle.difficulty.label} cube is done and you can share your score.`,
+    "Lock it in",
+    finish,
+  );
+}
+
+function confirmGiveUp() {
+  const { result, puzzle } = game;
+  ask(
+    "Give up?",
+    `Your score stays at ${result.score} of ${puzzle.max}, then the cube twists itself back so you can see every word you missed.`,
+    "🏳️ Show me",
+    giveUp,
+  );
+}
+
+function ask(title, text, okLabel, onOk) {
+  $("confirm-title").textContent = title;
+  $("confirm-text").textContent = text;
+  $("confirm-ok").textContent = okLabel;
   const dlg = $("confirm-dialog");
   dlg.returnValue = "";
-  dlg.onclose = () => dlg.returnValue === "ok" && finish();
+  dlg.onclose = () => dlg.returnValue === "ok" && onOk();
   openDialog(dlg);
 }
 
@@ -302,6 +368,7 @@ function openDialog(dlg) {
 
 $("undo-btn").onclick = undo;
 $("view-btn").onclick = () => view.resetView();
+$("giveup-btn").onclick = () => !busy && !game.done && confirmGiveUp();
 $("done-btn").onclick = () => (game.done ? showResults() : confirmFinish());
 $("stats-btn").onclick = showResults;
 $("help-btn").onclick = () => openDialog($("help-dialog"));

@@ -112,6 +112,20 @@ export function buildScrambled(n, solution, scramble) {
 // The shortest known way back is the scramble undone in reverse.
 export const solutionMoves = (puzzle) => [...puzzle.scramble].reverse().map(inverseMove);
 
+// Moves that take the cube from where the player is back to the solved cube: undo the
+// player's twists, then undo the scramble, cancelling any twist that is immediately
+// undone (e.g. a player's last scramble-undo followed by redoing it).
+export function revealMoves(puzzle, playerMoves) {
+  const seq = [...playerMoves].reverse().map(inverseMove).concat(solutionMoves(puzzle));
+  const out = [];
+  for (const m of seq) {
+    const top = out[out.length - 1];
+    if (top && top.axis === m.axis && top.layer === m.layer && top.dir === -m.dir) out.pop();
+    else out.push(m);
+  }
+  return out;
+}
+
 // Each row of each face, read left to right, scores one point if it spells a word.
 // status: "target" = the row is back to the day's original word,
 //         "word"   = some other real word (still counts!),
@@ -158,13 +172,13 @@ export function formatTime(ms) {
 
 const SQUARE = { target: "🟩", word: "🟨", none: "⬛" };
 
-export function shareText({ puzzle, result, moves, timeMs, url }) {
+export function shareText({ puzzle, result, moves, timeMs, url, gaveUp = false }) {
   const { n, max, par, difficulty } = puzzle;
   const lines = [];
   lines.push(`${GAME_NAME} #${puzzle.number} · ${difficulty.label} ${n}×${n} 🧊`);
-  lines.push(`⭐ ${result.score}/${max} words · ${rankFor(result.score, max)}`);
+  lines.push(`⭐ ${result.score}/${max} words · ${gaveUp ? "🏳️ Gave up" : rankFor(result.score, max)}`);
   let movesLine = `🔄 ${moves} move${moves === 1 ? "" : "s"} (par ${par})`;
-  if (result.score === max && moves <= par) movesLine += " ⛳";
+  if (!gaveUp && result.score === max && moves <= par) movesLine += " ⛳";
   lines.push(`${movesLine} · ⏱️ ${formatTime(timeMs)}`);
   lines.push("");
   // One column per face, one line per row: a mini picture of the cube.

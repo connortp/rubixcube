@@ -157,7 +157,15 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
 /* ---- bottom bar ---- */
-.bar { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 8px; }
+.bar { display: flex; gap: 8px; }
+.bar .btn { flex: 1 1 0; min-width: 0; white-space: nowrap; padding-left: 6px; padding-right: 6px; }
+.bar .btn.primary { flex-grow: 1.4; }
+.bar #view-btn { flex-grow: 0.5; font-size: 19px; }
+.bar .btn[hidden] { display: none; }
+@media (max-width: 420px) {
+  .bar { gap: 6px; }
+  .bar .btn { font-size: 14px; }
+}
 .btn {
   border: 1px solid var(--line);
   background: var(--bg2);

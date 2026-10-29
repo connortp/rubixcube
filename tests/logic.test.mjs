@@ -107,3 +107,29 @@ test("centre letters stay upright when their face turns", () => {
   const corner = cube.stickers.find((s) => s.normal[2] === 1 && s.pos[0] === 2 && s.pos[1] === 2);
   assert.notDeepEqual(corner.up, [0, 1, 0]);
 });
+
+test("give-up reveal moves solve the cube from wherever the player is", async () => {
+  const { revealMoves } = await import("../js/puzzle.js");
+  const p = generatePuzzle("2026-10-29", "medium");
+  const tries = [
+    [{ axis: 0, layer: 4, dir: 1 }, { axis: 1, layer: -2, dir: -1 }, ...solutionMoves(p).slice(0, 2)],
+    solutionMoves(p).slice(0, 2),
+  ];
+  for (const played of tries) {
+    const cube = buildScrambled(p.n, p.solution, p.scramble);
+    for (const m of played) applyMove(cube, m);
+    const reveal = revealMoves(p, played);
+    for (const m of reveal) applyMove(cube, m);
+    assert.equal(scoreCube(cube, p.solution).targets, p.max);
+  }
+  // Twists the player already got right aren't undone and redone.
+  assert.equal(revealMoves(p, tries[1]).length, p.par - 2);
+});
+
+test("share text after giving up says so and never earns the par flag", () => {
+  const p = generatePuzzle("2026-10-29", "easy");
+  const cube = buildScrambled(p.n, p.solution, []);
+  const text = shareText({ puzzle: p, result: scoreCube(cube, p.solution), moves: 1, timeMs: 1000, gaveUp: true });
+  assert.match(text, /🏳️ Gave up/);
+  assert.doesNotMatch(text, /⛳/);
+});
