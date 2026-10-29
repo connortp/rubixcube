@@ -108,6 +108,45 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .stat.bump b { animation: bump 0.4s ease; }
 @keyframes bump { 40% { transform: scale(1.25); color: var(--green); } }
 
+/* ---- per-face table ---- */
+.faces { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.face-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 4px 2px 7px;
+  font-variant-numeric: tabular-nums;
+  position: relative;
+}
+.face-bar { position: absolute; left: 6px; right: 6px; bottom: 3px; height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.face-bar i { display: block; height: 100%; background: var(--yellow); }
+.face-cell.full .face-bar i { background: var(--green); }
+.face-letter {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: #f6f1e7;
+  color: #15151c;
+  font-weight: 900;
+  font-size: 14px;
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 0 0 2px rgba(21, 21, 28, 0.25);
+}
+.face-count { font-size: 13px; font-weight: 700; color: var(--muted); }
+.face-cell.some .face-count { color: var(--yellow); }
+.face-cell.full { border-color: var(--green); }
+.face-cell.full .face-count { color: var(--green); }
+.face-cell.full .face-letter { background: var(--green); }
+
+@media (max-width: 380px) {
+  .face-cell { flex-direction: column; gap: 2px; }
+}
+
 /* ---- found words ---- */
 .words {
   display: flex;

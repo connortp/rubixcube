@@ -190,6 +190,16 @@ function refresh() {
   doneBtn.textContent = game.done ? "📤 Share" : "Lock in";
   $("giveup-btn").hidden = game.done;
 
+  // Per-face table, labelled by each face's fixed centre letter: "A 2/5".
+  const mid = (puzzle.n - 1) / 2;
+  $("faces").innerHTML = FACES.map((face, f) => {
+    const found = game.result.status[f].filter((st) => st !== "none").length;
+    const cls = found === puzzle.n ? "full" : found ? "some" : "";
+    return `<div class="face-cell ${cls}" title="${face.name} face: ${found} of ${puzzle.n} rows are words">
+      <span class="face-letter">${grid[f][mid][mid].letter}</span><span class="face-count">${found}/${puzzle.n}</span>
+      <span class="face-bar"><i style="width:${(100 * found) / puzzle.n}%"></i></span></div>`;
+  }).join("");
+
   // Word chips; announce new ones.
   const found = [];
   result.status.forEach((rows, f) => rows.forEach((st, r) => st !== "none" && found.push({ w: result.rows[f][r], st, key: `${f}:${r}:${result.rows[f][r]}` })));
