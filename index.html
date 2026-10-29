@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#101018" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="A daily word puzzle on a twisty letter cube. Twist the layers until every row spells a word, then share your score." />
+  <meta property="og:title" content="CUBEWORD · daily letter cube" />
+  <meta property="og:description" content="Twist the cube until every row spells a word. New cube every day." />
+  <title>CUBEWORD</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <button class="icon-btn" id="help-btn" aria-label="How to play">?</button>
+      <div class="brand">
+        <h1>CUBE<span>WORD</span></h1>
+        <div class="sub" id="puzzle-label"></div>
+      </div>
+      <button class="icon-btn" id="stats-btn" aria-label="Results">📊</button>
+    </header>
+
+    <nav class="tabs" id="tabs" role="tablist"></nav>
+
+    <section class="hud">
+      <div class="stat"><b id="score">0/18</b><span>words</span></div>
+      <div class="stat"><b id="moves">0</b><span id="par">par 5</span></div>
+      <div class="stat"><b id="timer">0:00</b><span>time</span></div>
+    </section>
+
+    <section class="words" id="words" aria-label="Words on the cube"></section>
+
+    <main class="stage" id="stage">
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </main>
+
+    <footer class="bar">
+      <button class="btn ghost" id="undo-btn">↶ Undo</button>
+      <button class="btn ghost" id="view-btn">⟲ View</button>
+      <button class="btn primary" id="done-btn">Lock in</button>
+    </footer>
+  </div>
+
+  <dialog id="help-dialog">
+    <form method="dialog" class="sheet">
+      <h2>How to play</h2>
+      <p>It's a twisty cube with a letter on every sticker. Once upon a time (this morning), <b>every row on every face spelled a word</b>. Then it got scrambled.</p>
+      <ul class="howto">
+        <li><span>👆</span><div><b>Drag a letter</b> to twist that row or column, just like a real cube.</div></li>
+        <li><span>🌀</span><div><b>Drag empty space</b> (or use two fingers) to spin the whole cube around and look at the other sides.</div></li>
+        <li><span>📌</span><div>The <b>ringed centre letter</b> on each face never moves and always points up. Read rows left to right from its point of view. The middle slices can't turn.</div></li>
+        <li><span>⭐</span><div>Every row that spells a word is a point. <b class="g">Green</b> = the original word is back. <b class="y">Yellow</b> = a different real word, still a point!</div></li>
+        <li><span>⛳</span><div><b>Par</b> is how many twists it took to scramble. Max score is 6 faces × rows.</div></li>
+        <li><span>📤</span><div>Hit <b>Lock in</b> when you're happy, then <b>Share</b> your score with the group chat.</div></li>
+      </ul>
+      <p class="muted">Easy is a 3×3 with 3-letter words, Medium a 5×5 with 5-letter words, Hard a 7×7 with 7-letter words. Same cubes for everyone, new ones every midnight.</p>
+      <button class="btn primary wide" value="close">Let's twist</button>
+    </form>
+  </dialog>
+
+  <dialog id="confirm-dialog">
+    <form method="dialog" class="sheet small">
+      <h2>Lock in your score?</h2>
+      <p id="confirm-text"></p>
+      <div class="row">
+        <button class="btn ghost" value="cancel">Keep twisting</button>
+        <button class="btn primary" value="ok">Lock it in</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="result-dialog">
+    <form method="dialog" class="sheet">
+      <button class="close" value="close" aria-label="Close">✕</button>
+      <div class="result-rank" id="result-rank"></div>
+      <div class="result-score" id="result-score"></div>
+      <div class="result-meta" id="result-meta"></div>
+      <pre class="result-grid" id="result-grid"></pre>
+      <button type="button" class="btn primary wide share" id="share-btn">📤 Share score</button>
+      <div class="result-stats" id="result-stats"></div>
+      <details class="answers" id="answers">
+        <summary>Today's original words</summary>
+        <div id="answers-list"></div>
+      </details>
+      <p class="muted center" id="next-puzzle"></p>
+    </form>
+  </dialog>
+
+  <noscript>CUBEWORD needs JavaScript to run.</noscript>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
